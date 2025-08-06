@@ -25,13 +25,13 @@ from sglang.srt.sampling.sampling_params import SamplingParams
 from sglang.srt.server_args import PortArgs, ServerArgs
 from sglang.srt.speculative.spec_info import SpeculativeAlgorithm
 from sglang.srt.utils import (
-    DeepEPMode,
     configure_logger,
     get_bool_env_var,
     require_mlp_sync,
     require_mlp_tp_gather,
     set_gpu_proc_affinity,
 )
+from sglang.srt.layers.moe.utils import DeepEPMode
 from tqdm import tqdm
 from transformers import AutoConfig, AutoTokenizer
 
