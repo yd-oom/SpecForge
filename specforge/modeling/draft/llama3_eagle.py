@@ -10,7 +10,7 @@ from transformers.activations import ACT2FN
 from transformers.models.llama.configuration_llama import LlamaConfig
 import torch.distributed as dist
 from specforge.distributed import get_tp_group
-from specforge.layers.linear import ColumnParallelLinear, RowParallelLinear
+from specforge.layers.linear import ColumnParallelLinear, RowParallelLinear, _AllReduce
 
 from ..utils import padding
 from .base import Eagle3DraftModel
@@ -398,7 +398,7 @@ class LlamaAttention(nn.Module):
 
         attn_output = self.o_proj(attn_output)
         if self._tp_size > 1:
-            dist.all_reduce(attn_output, op=dist.ReduceOp.SUM, group=self.tp_group)
+            attn_output = _AllReduce.apply(attn_output, dist.ReduceOp.SUM, self.tp_group)
         return attn_output
 
 
@@ -429,8 +429,7 @@ class LlamaMLP(nn.Module):
         down_proj = self.down_proj(self.act_fn(gate_output) * up_output)
 
         if self._tp_size > 1:
-            dist.all_reduce(down_proj, op=dist.ReduceOp.SUM, group=self.tp_group)
-
+            down_proj = _AllReduce.apply(down_proj, dist.ReduceOp.SUM, self.tp_group)
         return down_proj
 
 class LlamaRMSNorm(nn.Module):
