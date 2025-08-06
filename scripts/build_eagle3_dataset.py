@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument("--output-path", type=str, default=None)
     parser.add_argument("--max-length", type=int, default=2048)
     parser.add_argument("--num-samples", type=int, default=None)
+    parser.add_argument("--chat-template", type=str, default="llama3")
     return parser.parse_args()
 
 
@@ -43,10 +44,10 @@ def main():
         dataset = dataset.select(range(args.num_samples))
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     cache_params_string = (
-        f"{args.train_data_path}-"
+        f"{args.data_path}-"
         f"{args.max_length}-"
         f"{args.chat_template}-"
-        f"{args.target_model_path}"  # Tokenizer may also different
+        f"{args.model_path}"  # Tokenizer may also different
     )
     cache_key = hashlib.md5(cache_params_string.encode()).hexdigest()
     eagle3_dataset = build_eagle3_dataset(

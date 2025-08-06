@@ -350,10 +350,10 @@ def main():
         dataset = dataset.select(range(args.num_samples))
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     cache_params_string = (
-        f"{args.train_data_path}-"
+        f"{args.data_path}-"
         f"{args.max_length}-"
         f"{args.chat_template}-"
-        f"{args.target_model_path}"  # Tokenizer may also different
+        f"{args.model_path}"  # Tokenizer may also different
     )
     cache_key = hashlib.md5(cache_params_string.encode()).hexdigest()
     with rank_0_priority():
