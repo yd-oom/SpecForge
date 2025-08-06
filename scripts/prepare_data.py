@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument(
         "--dataset",
         type=str,
-        choices=["ultrachat", "sharegpt", "opc"],
+        choices=["ultrachat", "sharegpt", "opc", "longwriter"],
         help="The demo dataset to quickly run the training for speculative decoding",
     )
     parser.add_argument(
@@ -53,7 +53,7 @@ def parse_args():
 
 
 def process_ultrachat_row(row) -> Dict:
-    """Process a row from the ultrachat dataset.
+    """Processes a row from datasets with a "messages" schema like ultrachat or longwriter.
 
     The function expects a row with the following schema:
     "messages": [
@@ -62,6 +62,7 @@ def process_ultrachat_row(row) -> Dict:
             "content": str
         }
     ]
+    It generates an ID if one is not readily available (like 'prompt_id').
     """
     conversations = row["messages"]
     formatted_conversations = []
@@ -70,7 +71,12 @@ def process_ultrachat_row(row) -> Dict:
         content = message["content"]
         assert role in ["user", "assistant"]
         formatted_conversations.append({"role": role, "content": content})
-    row = {"id": row["prompt_id"], "conversations": formatted_conversations}
+    if "prompt_id" in row:
+        row_id = row["prompt_id"]
+    else:
+        full_content = "".join([msg["content"] for msg in formatted_conversations])
+        row_id = hashlib.md5(full_content.encode('utf-8')).hexdigest()
+    row = {"id": row_id, "conversations": formatted_conversations}
     return row, 0
 
 
@@ -140,6 +146,11 @@ def main():
             "OpenCoder-LLM/opc-sft-stage1", "largescale_diverse_instruct"
         )["train"]
         proc_fn = process_opc_sft_stage1
+    elif args.dataset == "longwriter":
+        ds = load_dataset(
+            "zai-org/LongWriter-6k"
+        )["train"]
+        proc_fn = process_ultrachat_row
     else:
         raise ValueError(
             f"This script only supports ultrachat_200k and sharegpt datasets for demo purpose, if you wish to use other datasets, please modify this script."
